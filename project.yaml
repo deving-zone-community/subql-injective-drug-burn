@@ -1,0 +1,57 @@
+# COSMOS MANIFEST FILE https://academy.subquery.network/build/manifest/cosmos.html#cosmos-manifest-file
+specVersion: 1.0.0
+name: subql-injective-drug-burns
+version: 0.0.1
+runner:
+  node:
+    name: "@subql/node-cosmos"
+    version: "*"
+  query:
+    name: "@subql/query"
+    version: "*"
+description: >-
+  Subql Project for Injective Drug burning
+
+schema:
+  file: ./schema.graphql
+
+network:
+  chainId: injective-1
+  # This endpoint must be a public non-pruned archive node
+  # We recommend providing more than one endpoint for improved reliability, performance, and uptime
+  # Public nodes may be rate limited, which can affect indexing speed
+  # When developing your project we suggest getting a private API key
+  # You can get them from OnFinality for free https://app.onfinality.io
+  # https://documentation.onfinality.io/support/the-enhanced-api-service
+  endpoint:
+#    - "https://sentry.tm.injective.network"
+    - "https://injective-rpc.publicnode.com"
+  # Optionally provide the HTTP endpoint of a full chain dictionary to speed up processing
+  # chainTypes: # This is a beta feature that allows support for any Cosmos chain by importing the correct protobuf messages
+  #  cosmos.slashing.v1beta1:
+  #    file: "./proto/cosmos/slashing/v1beta1/tx.proto"
+  #    messages:
+  #     - "MsgUnjail"
+
+# Sample TX, first burn
+# 1234 $drugs https://www.mintscan.io/injective/tx/CFCC249A722CEE55AEB513BB4EAA1E53545705C2C6401BE9516E4FD89BB9EABA?height=72134565
+dataSources:
+  - kind: cosmos/Runtime
+    # https://www.mintscan.io/injective/tx/CFCC249A722CEE55AEB513BB4EAA1E53545705C2C6401BE9516E4FD89BB9EABA?height=72134565
+    startBlock: 72134565 # 1nd BRUN
+    mapping:
+      file: ./dist/index.js
+      handlers:
+        # ALL DRUG BURNS
+        - handler: handleDrugBurn
+          kind: cosmos/MessageHandler
+          filter:
+            type: "/cosmwasm.wasm.v1.MsgExecuteContract"
+            # Filter to only messages with the provide_liquidity function call
+            contractCall: "burn" # The name of the contract function that was called
+            # Include messages that were in a failed transaction (false by default)
+            includeFailedTx: false
+            values: # A set of key/value pairs that are present in the message data
+              # DRUG TOKEN
+              # https://explorer.injective.network/contract/inj19vy83ne9tzta2yqynj8yg7dq9ghca6yqn9hyej/
+              contract: "inj19vy83ne9tzta2yqynj8yg7dq9ghca6yqn9hyej"
